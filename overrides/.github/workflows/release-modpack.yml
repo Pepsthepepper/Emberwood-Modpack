@@ -1,0 +1,34 @@
+name: Create Modpack Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Runs only when you push a tag like v1.0.0
+
+jobs:
+  build:
+    name: Zip and Release Modpack
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set release version
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Create modpack zip
+        run: |
+          mkdir build
+          zip -r "build/Modpack-${{ env.RELEASE_VERSION }}.zip" \
+            mods config scripts \
+            manifest.json pack.mcmeta || echo "Some folders may not exist"
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Modpack ${{ env.RELEASE_VERSION }}
+          tag_name: ${{ env.RELEASE_VERSION }}
+          files: build/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
